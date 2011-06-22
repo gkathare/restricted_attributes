@@ -1,0 +1,457 @@
+RestrictedAttributes
+====================
+
+This restricted_attributes plugin provides the capabilities to restrict attributes(fields) 
+of db table's while add or update a record. It validate your attributes values before
+your validation stuff.
+
+Features
+========
+
+ - Provides three different ways of restriction on fields (i.e read_only, create_only, update_only)
+ - Restrict to add/modify values of particular attributes at model level while creating/updating a record.
+ - Restrict functionality perform at before validation.
+ - OPTIONAL : It can also works on the basis of declarative_authorization roles system.
+ - So, able to set role wise restriction/permission on various users to change the value of an attributes.
+
+
+
+Method
+======
+has_restricted_attributes(options = {})
+  
+  This method accepts the options in a hash:
+    
+    1 :read_only            # In this you can add attributes to restrict from add/update the value.
+    			    # Access attributes values:  can read,  But can't add or modify
+                            # Format for single attribute -
+                            # :read_only => :name or :read_only => "name"
+                            # Format for array of attributes -
+                            # :read_only => [:name, :bio] or :read_only => ["name", "bio"]
+
+    2 :create_only          # In this you can add attributes to restrict from update the value.
+    			    # Access attributes values: can read and add,  But can't modify.
+                            # Format for single attribute -
+                            # :create_only => :name or :create_only => "name"
+                            # Format for array of attributes -
+                            # :create_only => [:name, :bio] or :create_only => ["name", "bio"]
+
+    3 :update_only          # In this you can add attributes to restrict from add the value.
+    			    # Access attributes values: can read and modify,  But can't add.
+                            # Format for single attribute -
+                            # :update_only => :name or :update_only => "name"
+                            # Format for array of attributes -
+                            # :update_only => [:name, :bio] or :update_only => ["name", "bio"]
+
+    *4 :declarative         # IMPORTANT - Useful only if you are using declarative_authorization
+                            # plugin or gem in your application.
+                            # -Provides capability to set restriction on the basis of
+                            #  declarative_authorization(plugin/gem) role system.
+                            # -So you can restrict/permit to change the value of a
+                            #  attributes role wise for various users in the application.
+
+                            # Format - :declarative => false or :declarative => true .
+                            # Use :declarative tag if you want follow role system with
+                            # declarative_authorization.
+                            # Default - it is false (:declarative => false) .
+
+                            NOTE: if you are using :declarative => true then first you need create
+                                 permissions.yml file in your Project/config folder.
+
+
+    5 :read_only_message    # validation message for read_only attributes
+                            # Format - :read_only_message => "blah blah"  (string type)
+                            # Default message - "is a read only attribute"
+
+    6 :create_only_message  # validation message for create_only attributes
+                            # Format - :create_only_message => "blah blah"  (string type)
+                            # Default message - "can't update, its permitted to create only."
+
+    7 :update_only_message  # validation message for update_only attributes
+                            # Format - :update_only_message => "blah blah"  (string type)
+                            # Default message - "can't add, its permitted to update only."
+
+
+
+Requirements (Only if you want to use :declarative tag feature)
+==============================================================
+
+ - declarative_authorization plugin/gem.
+
+ - create permissions.yml file in your Project/config folder.
+
+config/permissions.yml
+---------------------
+
+You need create permissions.yml file in your Project/config folder.
+
+    Format : /config/permissions.yml   
+    _____________________________________________________________
+    |:role_1:							|
+    |  :class_name_1:						|
+    |    :permit_to: [:attribute1, attribute2]			|
+    |  :class_name_2:						|
+    |    :permit_to: [:attribute1, attribute2]			|
+    |:role_2:							|
+    |  :class_name_1:						|
+    |    :permit_to: [:attribute1, attribute2]			|
+    |  :class_name_2:						|
+    |    :permit_to: [:attribute1, attribute2]			|
+    |								|
+    |								|
+    |								|
+    |								|
+    |___________________________________________________________|
+
+    where
+    - role_1, role_2 are the roles of user
+    - class_name_1, class_name_2 are the class name or Model name
+    - permit_to: []  feature to set permission to change value of added attributes.
+
+
+
+======================================================================================================================
+------------------------------------------ Examples Set 1 ------------------------------------------------------------
+
+
+# Example 1 Simple one (without use of :declarative tag feature)
+================================================================
+
+    class Post < ActiveRecord::Base
+        has_restricted_attributes :read_only => [:status],
+                            :create_only => [:title, :publish],
+                            :update_only => [:tags],
+                            :read_only_message => "is a read only attribute",
+                            :create_only_message => "can't update, its permitted to create only.",
+                            :update_only_message => "can't add, its permitted to update only."
+    end
+
+
+
+    So, the restricted attributes will be as shown in following table.
+    
+    #Post Model :
+
+    |-----------|-------------------------------------------------------------|
+    |           |     ( Read Only )   |  ( Create Only )  |  (Update Only )   |
+    |           |       :status       | :title, :publish  |     :tags         |
+    |           |-------------------------------------------------------------|
+    |   Can ->  |   Create  |  Update | Create  | Update  | Create  | Update  |
+    |-----------|-----------|---------|-------------------|-------------------|
+    |   Any     |           |         |         |         |         |         |
+    |   User    |     NO    |    NO   |  YES    |   NO    |   NO    |  YES    |
+    |           |           |         |         |         |         |         |
+    ---------------------------------------------------------------------------
+
+    Console Output :
+    ---------------
+
+    >> post = Post.new(:status => true, :title => "New Title", :tags => "new, topic")
+    >> post.save
+    => false
+
+    >> post.errors
+    => #<OrderedHash {:status => ["is a read only attribute"], :tags=>["can't add, its permitted to update only."]}>
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+# Example 2 : (with :declarative => true tag feature)
+=====================================================
+
+Step 1 :
+
+    class User < ActiveRecord::Base
+        has_restricted_attributes :read_only => [:logged_in],
+                            :create_only => [:login, :email],
+                            :update_only => [:bio],
+                            :declarative => true
+
+    end
+
+    class Post < ActiveRecord::Base
+        has_restricted_attributes :read_only => [:status],
+                            :create_only => [:title, :publish],
+                            :update_only => [:tags],
+                            :declarative => true,
+                            :read_only_message => "is a read only attribute",
+                            :create_only_message => "can't update, its permitted to create only.",
+                            :update_only_message => "can't add, its permitted to update only."
+    end
+
+
+Step 2 :
+
+    Create permissions.yml file in your Project/config/ folder.
+    and add roles & permissions for the user as shown in following example.
+
+    *Here you can set permission to change the value of restricted attributes on the basis of role system.
+
+    Example:
+    ## /config/permissions.yml
+     ___________________________________________________________
+    |:global_admin:						|
+    |  :user:							|
+    |    :permit_to: [:logged_in, :login, :email, :bio] 	|
+    |  :post:							|
+    |    :permit_to: [:title, :status, :publish, :tags]		|
+    |:member:							|
+    |  :user:							|
+    |    :permit_to: [:email]					|
+    |  :post:							|
+    |    :permit_to: [:publish]         			|
+    |								|
+    |								|
+    |								|
+    |								|
+    |								|
+    |___________________________________________________________|
+
+    # where in that,
+    1 :global_admin , :member are the roles of user. [ROLE]
+    2 :user , :post are the class names [CLASS/MODEL]
+    3 :permit_to: [] here you can add those attributes which will be permitted for appropriate User [ATTRIBUTES]
+
+
+Result :
+
+   So, the permissions on restricted attributes for global_admin and member
+   user will be as shown in following table.
+   #Post Model :
+
+    |---------------|-----------------------------------------------------------------|
+    |               |   ( Read Only )    |  ( Create Only )       |  (Update Only )   |
+    |               |     :status        |   :title, :publish     |     :tags         |
+    |               |-----------------------------------------------------------------|
+    |   Can  ->     |  Create  |  Update | Create   |  Update     | Create  | Update  |
+    |---------------|----------|---------|----------|-------------|-------------------|
+    |               |          |         |          |             |         |         |
+    |   User        |   YES    |   YES   |   YES    |   YES       |  YES    |  YES    |
+    |(global_admin) |          |         |          |             |         |         |
+    |               |          |         |          |             |         |         |
+     ----------------------------------------------------------------  ----------------
+    |               |          |         |          |             |         |         |
+    |   User        |    NO    |   NO    |   YES    | NO-:title   |   NO    |  YES    |
+    |  (member)     |          |         |          |YES-:publish |         |         |
+    |               |          |         |          |             |         |         |
+    |---------------------------------------------------------------------------------|
+
+
+
+--------------------------------------------- End Examples Set 1 -----------------------------------------------------
+======================================================================================================================
+
+
+
+
+
+Helper Method & Instance Method ( For View & Controller files )
+===============================================================
+
+
+1 Helper Method `is_restricted?()` :
+------------------------------------
+
+    Syntax:
+    ------------------------------------------------------------
+    |   is_restricted?(Klass, action, field, user(optional))   |
+    ------------------------------------------------------------
+
+     This method accepts min 3 to max 4 argument :
+
+     1 Klass    # This is a mandatory & first argument of this method.
+                # Should be valid class (i.e Model Name), no String.
+                # Should be in constantize format
+                # Ex :  User ,  Post,  Comment
+
+     2 action   # This is a mandatory & second argument of this method.
+                # Should be either "create or "update".
+                # Should be either in symbol or in string format
+                # Ex :  :create or :update  or "create" or "update"
+
+     3 field    # This is a mandatory & third argument of this method.
+                # Should be valid attributes/field of that model or related db table.
+                # Should be either in symbol or in string format
+                # Ex :  :title or "title"
+
+     *4 user    # This is Optional & last argument of this method.
+                # IMPORTANT NOTE - Useful only if you are using declarative_authorization plugin/gem and
+                # has_restricted_attributes method with :declarative => true tag in your specified model.
+
+                # Should be either valid User object or nil (dont pass any fourth argument)
+                # Ex :  current_user (where current_user should be object of valid User record.)
+
+
+
+2 Instance Method `is_restricted?()` :
+--------------------------------------
+
+    Syntax:
+    --------------------------------------------------------------
+    |    object.is_restricted?(action, field, user(optional))    |
+    --------------------------------------------------------------
+
+     This method accepts min 2 to max 3 arguments :
+
+     1 action   # This is a mandatory & first argument of this method.
+                # Should be either "create or "update".
+                # Should be either in symbol or in string format
+                # Ex :  :create or :update  or "create" or "update"
+
+     2 field    # This is a mandatory & second argument of this method.
+                # Should be valid attributes/field of that model or related db table.
+                # Should be either in symbol or in string format
+                # Ex :  :title or "title"
+
+     *3 user    # This is Optional & last argument of this method.
+                # IMPORTANT NOTE - Useful only if you are using declarative_authorization plugin/gem and
+                # has_restricted_attributes method with :declarative => true tag in your specified model.
+
+                # Should be either valid User object or nil (dont pass any fourth argument)
+                # Ex :  current_user (where current_user should be object of valid User record.)
+
+
+
+
+======================================================================================================================
+------------------------------------------ Examples Set 2 ------------------------------------------------------------
+
+
+
+# Example 1 ( Use of Helper Method )
+====================================
+
+    # /models/post.rb
+    class Post < ActiveRecord::Base
+        has_restricted_attributes :read_only => [:active],
+                            :create_only => [:title],
+                            :declarative => true
+                            :update_only => [:abuse],
+			    :read_only_message => "is a read only attribute"
+    end
+
+    ## /config/permissions.yml
+     ___________________________________________________________
+    |:global_admin:						|
+    |  :post:							|
+    |    :permit_to: [:title, :description]			|
+    |___________________________________________________________|
+    Here I added permission for global_admin role.
+
+
+    So for this post class we can check its particular field is restricted or not.
+    You can use this method in controller or view file.
+
+    # CASE 1 - :declarative => true
+    
+        -----------------------------------------------------
+        |      is_restricted?(Post, :update, :title)        |
+        -----------------------------------------------------
+        
+        - return true(:title is restricted) for logged in user if his role is NOT a global_admin
+        - return false(:title is NOT restricted) for logged in user if his role is a global_admin
+
+        OR
+
+        -----------------------------------------------------------------
+        |      user = User.find(params[:id])  # any global_admin user   |
+        |      is_restricted?(Post, :update, :title, user)              |
+        -----------------------------------------------------------------
+
+        - return true(:title is restricted) for `user` if his role is NOT a global_admin
+        - return false(:title is NOT restricted) for `user` if his role is a global_admin
+
+
+     # CASE 2 - :declarative => false  or if not added in model.
+     
+        ---------------------------------------------------------------------------------
+        |      is_restricted?(Post, :update, :title) # don't pass fourth argument       |
+        ---------------------------------------------------------------------------------
+
+        - return true(:title is restricted)
+
+
+
+
+
+
+# Example 2 ( Use of Instance Method )
+=======================================
+
+    # /models/post.rb
+    class Post < ActiveRecord::Base
+        has_restricted_attributes :read_only => [:active],
+                            :create_only => [:title],
+                            :declarative => true
+                            :update_only => [:abuse],
+			    :read_only_message => "is a read only attribute"
+    end
+
+    ## /config/permissions.yml
+     ___________________________________________________________
+    |:global_admin:						|
+    |  :post:							|
+    |    :permit_to: [:title, :description]			|
+    |___________________________________________________________|
+    Here I added permission for global_admin role.
+
+
+    So for this post class we can check its particular field is restricted or not.
+    You can use this method in controller or view file.
+
+    # CASE 1 - :declarative => true
+
+        -----------------------------------------------------
+        |      post = Post.find(params[:id])                |
+        |      post.is_restricted?(:update, :title)         |
+        -----------------------------------------------------
+
+        - return true(:title is restricted) for logged in user if his role is NOT a global_admin
+        - return false(:title is NOT restricted) for logged in user if his role is a global_admin
+
+        OR
+
+        -------------------------------------------------------------------------
+        |      user = User.find(params[:id])  # any global_admin user           |
+        |      post = Post.find(params[:id])                                    |
+        |      post.is_restricted?(:update, :title, user)                       |
+        -------------------------------------------------------------------------
+
+        - return true(:title is restricted) for `user` if his role is NOT a global_admin
+        - return false(:title is NOT restricted) for `user` if his role is a global_admin
+
+
+     # CASE 2 - :declarative => false  or if not added in model.
+
+        -----------------------------------------------------------------------------
+        |      post = Post.find(params[:id])                                        |
+        |      is_restricted?(:update, :title) # don't pass third argument          |
+        -----------------------------------------------------------------------------
+
+        - return true(:title is restricted)
+
+
+
+
+--------------------------------------------- End Examples Set 2 -----------------------------------------------------
+======================================================================================================================
+
+
+
+
+
+Valuable Contribution : Rahul Agarwal.
+
+#############################################################################
+# Easiest way to contact me(Ganesh Kathare):				    #
+# My email - kathare[dot]ganesh[at]gmail[dot]com (kathare.ganesh@gmail.com) #
+# GitHub - gkathare							    #
+#############################################################################
+
+Copyright (c) 2011 Ganesh Kathare, Navi Mumbai MH, India. released under the MIT license
+
+
+
