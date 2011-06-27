@@ -28,7 +28,7 @@ module RestrictedAttrib
       # check for read only attributes
       unless restrict_read_only.blank?
         restrict_read_only.each do |ro|
-          if self.changed.include?(ro)
+          if self.changed.include?(ro) || !eval("self.instance_variable_get :@#{ro}").blank?
             self.errors.add(ro.humanize, self.read_only_message)
           end
         end
@@ -37,7 +37,7 @@ module RestrictedAttrib
       # check for create only attributes
       if !restrict_create_only.blank? && !self.new_record?
         restrict_create_only.each do |co|
-          if self.changed.include?(co)
+          if self.changed.include?(co) || !eval("self.instance_variable_get :@#{co}").blank?
             self.errors.add(co.humanize, self.create_only_message)
           end
         end
@@ -46,7 +46,7 @@ module RestrictedAttrib
       # check for update only attributes
       if !restrict_update_only.blank? && self.new_record?
         restrict_update_only.each do |uo|
-          if self.changed.include?(uo)
+          if self.changed.include?(uo) || !eval("self.instance_variable_get :@#{uo}").blank?
             self.errors.add(uo.humanize, self.update_only_message)
           end
         end
@@ -55,7 +55,7 @@ module RestrictedAttrib
       # check for hidden only attributes
       if !restrict_hidden_only.blank?
         restrict_hidden_only.each do |ho|
-          if self.changed.include?(ho)
+          if self.changed.include?(ho) || !eval("self.instance_variable_get :@#{ho}").blank?
             self.errors.add(ho.humanize, self.hidden_only_message)
           end
         end
@@ -80,7 +80,7 @@ module RestrictedAttrib
       end
 
       klass_attributes = klass_object.attributes.keys
-      if field.nil? || !klass_attributes.include?(field)
+      if field.nil? || (!klass_attributes.include?(field) && !klass_object.methods.include?("#{field}="))
         raise ActiveRecord::UnknownAttributeError, "#{klass}: unknown attribute(field): #{field}"
       end
 

@@ -126,7 +126,7 @@ module RestrictedAttributes
         restrict_read_only = klass_object.read_only
         restrict_create_only = klass_object.create_only
         restrict_update_only = klass_object.update_only
-	restrict_hidden_only = klass_object.hidden_only
+        restrict_hidden_only = klass_object.hidden_only
       end
 
       if action == "create" || action == "update" || action == "read"
