@@ -13,14 +13,16 @@ module RestrictedAttrib
     def check_for_restricted_values
       
       if self.declarative # Using declarative_authorization roles system
-        roles = RightsManager.get_roles(Authorization.current_user,self)
-        restrict_read_only = RightsManager.get_readonly_fields(roles,self)
-        restrict_create_only = RightsManager.get_createonly_fields(roles,self)
-        restrict_update_only = RightsManager.get_updateonly_fields(roles,self)
+        roles = RestrictedRightsManager.get_roles(Authorization.current_user,self)
+        restrict_read_only = RestrictedRightsManager.get_readonly_fields(roles,self)
+        restrict_create_only = RestrictedRightsManager.get_createonly_fields(roles,self)
+        restrict_update_only = RestrictedRightsManager.get_updateonly_fields(roles,self)
+        restrict_hidden_only = RestrictedRightsManager.get_hiddenonly_fields(roles,self)
       else # simple one
         restrict_read_only = self.read_only
         restrict_create_only = self.create_only
         restrict_update_only = self.update_only
+        restrict_hidden_only = self.hidden_only
       end
 
       # check for read only attributes
@@ -49,6 +51,15 @@ module RestrictedAttrib
           end
         end
       end
+
+      # check for hidden only attributes
+      if !restrict_hidden_only.blank?
+        restrict_hidden_only.each do |ho|
+          if self.changed.include?(ho)
+            self.errors.add(ho.humanize, self.hidden_only_message)
+          end
+        end
+      end
       
       # will return validation result
       return false unless self.errors.blank?
@@ -64,8 +75,8 @@ module RestrictedAttrib
          raise NoMethodError, "undefined method `is_restricted?` for #{klass} model. You need to add `has_restricted_method` method in #{klass} model."
       end
 
-      if action.nil? || !['create', 'update'].include?(action)
-        raise ArgumentError, "Invalid action - (#{action}), Pass valid action - :create or :update or 'create' or 'update'"
+      if action.nil? || !['create', 'update', 'read'].include?(action)
+        raise ArgumentError, "Invalid action - (#{action}), Pass valid action - :read or :create or :update or 'read' or 'create' or 'update'"
       end
 
       klass_attributes = klass_object.attributes.keys
@@ -82,16 +93,22 @@ module RestrictedAttrib
         present_user = Authorization.current_user
         Authorization.current_user = user if user && user.roles
 
-        roles = RightsManager.get_roles(Authorization.current_user,klass_object)
-        restrict_read_only = RightsManager.get_readonly_fields(roles,klass_object)
-        restrict_create_only = RightsManager.get_createonly_fields(roles,klass_object)
-        restrict_update_only = RightsManager.get_updateonly_fields(roles,klass_object)
+        roles = RestrictedRightsManager.get_roles(Authorization.current_user,klass_object)
+        restrict_read_only = RestrictedRightsManager.get_readonly_fields(roles,klass_object)
+        restrict_create_only = RestrictedRightsManager.get_createonly_fields(roles,klass_object)
+        restrict_update_only = RestrictedRightsManager.get_updateonly_fields(roles,klass_object)
+        restrict_hidden_only = RestrictedRightsManager.get_hiddenonly_fields(roles,klass_object)
 
         Authorization.current_user = present_user if user && user.roles
       else
         restrict_read_only = klass_object.read_only
         restrict_create_only = klass_object.create_only
         restrict_update_only = klass_object.update_only
+        restrict_hidden_only = klass_object.hidden_only
+      end
+
+      if action == "create" || action == "update" || action == "read"
+        return true if !restrict_hidden_only.blank? && restrict_hidden_only.include?(field)
       end
 
       if action == "create" || action == "update"

@@ -15,12 +15,12 @@ PKG_FILES = FileList[
  
 spec = Gem::Specification.new do |s|
   s.name = "restricted_attributes"
-  s.version = "0.1.0"
+  s.version = "1.0.0"
   s.author = "Ganesh Kathare"
   s.email = "kathare.ganesh@gmail.com"
   s.homepage = "https://github.com/gkathare"
   s.platform = Gem::Platform::RUBY
-  s.summary = "Sharing restricted_attributes Goodness"
+  s.summary = "Sharing restricted_attributes"
   s.files = PKG_FILES.to_a
   s.require_path = "lib"
   s.has_rdoc = false

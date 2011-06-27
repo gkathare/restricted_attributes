@@ -8,7 +8,7 @@ your validation stuff.
 Features
 ========
 
- - Provides three different ways of restriction on fields (i.e read_only, create_only, update_only)
+ - Provides four different ways of restriction on fields (i.e read_only, create_only, update_only and hidden)
  - Restrict to add/modify values of particular attributes at model level while creating/updating a record.
  - Restrict functionality perform at before validation.
  - OPTIONAL : It can also works on the basis of declarative_authorization roles system.
@@ -43,7 +43,16 @@ has_restricted_attributes(options = {})
                             # Format for array of attributes -
                             # :update_only => [:name, :bio] or :update_only => ["name", "bio"]
 
-    *4 :declarative         # IMPORTANT - Useful only if you are using declarative_authorization
+    4 :hidden_only          # In this you can add attributes to restrict from add/update the value.
+    			    # Mainly used with 'is_restricted?()' helper Method & instance Method to
+			    # check has a read access or not.
+			    # Access attributes values: can read,  But can't add or modify.
+			    # Format for single attribute -
+                            # :hidden_only => :name or :hidden_only => "name"
+                            # Format for array of attributes -
+                            # :hidden_only => [:name, :bio] or :hidden_only => ["name", "bio"]
+
+    *5 :declarative         # IMPORTANT - Useful only if you are using declarative_authorization
                             # plugin or gem in your application.
                             # -Provides capability to set restriction on the basis of
                             #  declarative_authorization(plugin/gem) role system.
@@ -59,18 +68,21 @@ has_restricted_attributes(options = {})
                                  permissions.yml file in your Project/config folder.
 
 
-    5 :read_only_message    # validation message for read_only attributes
+    6 :read_only_message    # validation message for read_only attributes
                             # Format - :read_only_message => "blah blah"  (string type)
-                            # Default message - "is a read only attribute"
+                            # Default message - "is a read only attribute."
 
-    6 :create_only_message  # validation message for create_only attributes
+    7 :create_only_message  # validation message for create_only attributes
                             # Format - :create_only_message => "blah blah"  (string type)
                             # Default message - "can't update, its permitted to create only."
 
-    7 :update_only_message  # validation message for update_only attributes
+    8 :update_only_message  # validation message for update_only attributes
                             # Format - :update_only_message => "blah blah"  (string type)
                             # Default message - "can't add, its permitted to update only."
 
+    9 :hidden_only_message  # validation message for hidden_only attributes
+                            # Format - :hidden_only_message => "blah blah"  (string type)
+                            # Default message - "is a hidden attribute."
 
 
 Requirements (Only if you want to use :declarative tag feature)
@@ -89,6 +101,10 @@ You need create permissions.yml file in your Project/config folder.
     _____________________________________________________________
     |:role_1:							|
     |  :class_name_1:						|
+    |    :readonly: [:attribute1, attribute2]			|
+    |    :hiddenonly: [:attribute1, attribute2]			|
+    |    :createonly: [:attribute1, attribute2]			|
+    |    :updateonly: [:attribute1, attribute2]			|
     |    :permit_to: [:attribute1, attribute2]			|
     |  :class_name_2:						|
     |    :permit_to: [:attribute1, attribute2]			|
@@ -106,7 +122,9 @@ You need create permissions.yml file in your Project/config folder.
     where
     - role_1, role_2 are the roles of user
     - class_name_1, class_name_2 are the class name or Model name
+    - readonly, hiddenonly, createonly, updateonly - To set restriction on specific role.
     - permit_to: []  feature to set permission to change value of added attributes.
+    
 
 
 
@@ -121,6 +139,7 @@ You need create permissions.yml file in your Project/config folder.
         has_restricted_attributes :read_only => [:status],
                             :create_only => [:title, :publish],
                             :update_only => [:tags],
+			    :hidden_only => [:activated],
                             :read_only_message => "is a read only attribute",
                             :create_only_message => "can't update, its permitted to create only.",
                             :update_only_message => "can't add, its permitted to update only."
@@ -133,8 +152,8 @@ You need create permissions.yml file in your Project/config folder.
     #Post Model :
 
     |-----------|-------------------------------------------------------------|
-    |           |     ( Read Only )   |  ( Create Only )  |  (Update Only )   |
-    |           |       :status       | :title, :publish  |     :tags         |
+    |           |( Read/Hidden Only ) |  ( Create Only )  |  (Update Only )   |
+    |           | :status /:activated | :title, :publish  |     :tags         |
     |           |-------------------------------------------------------------|
     |   Can ->  |   Create  |  Update | Create  | Update  | Create  | Update  |
     |-----------|-----------|---------|-------------------|-------------------|
@@ -153,6 +172,16 @@ You need create permissions.yml file in your Project/config folder.
     >> post.errors
     => #<OrderedHash {:status => ["is a read only attribute"], :tags=>["can't add, its permitted to update only."]}>
 
+    # for hidden attributes
+    >> post = Post.new(:activated => true)
+    >> post.save
+    => false
+
+    >> post.errors
+    => #<OrderedHash {:status => ["is a hidden attribute"]}>
+    OR
+    >> post.is_restricted?(:read, :activated)  # To check :activated field is restricted to read.
+    => true
 
 
 
@@ -176,6 +205,7 @@ Step 1 :
         has_restricted_attributes :read_only => [:status],
                             :create_only => [:title, :publish],
                             :update_only => [:tags],
+			    :hidden_only => [:activated],
                             :declarative => true,
                             :read_only_message => "is a read only attribute",
                             :create_only_message => "can't update, its permitted to create only.",
@@ -268,9 +298,9 @@ Helper Method & Instance Method ( For View & Controller files )
                 # Ex :  User ,  Post,  Comment
 
      2 action   # This is a mandatory & second argument of this method.
-                # Should be either "create or "update".
+                # Valid actions : "create" or "update" or "read".
                 # Should be either in symbol or in string format
-                # Ex :  :create or :update  or "create" or "update"
+                # Ex :  :create or :update or :read  or "create" or "update" or "read"
 
      3 field    # This is a mandatory & third argument of this method.
                 # Should be valid attributes/field of that model or related db table.
@@ -297,9 +327,9 @@ Helper Method & Instance Method ( For View & Controller files )
      This method accepts min 2 to max 3 arguments :
 
      1 action   # This is a mandatory & first argument of this method.
-                # Should be either "create or "update".
+                # Valid actions : "create" or "update" or "read".
                 # Should be either in symbol or in string format
-                # Ex :  :create or :update  or "create" or "update"
+                # Ex :  :create or :update or :read  or "create" or "update" or "read"
 
      2 field    # This is a mandatory & second argument of this method.
                 # Should be valid attributes/field of that model or related db table.
@@ -445,13 +475,10 @@ Helper Method & Instance Method ( For View & Controller files )
 
 Valuable Contribution : Rahul Agarwal.
 
-#############################################################################
-# Easiest way to contact me(Ganesh Kathare):				    #
-# My email - kathare[dot]ganesh[at]gmail[dot]com (kathare.ganesh@gmail.com) #
-# GitHub - gkathare							    #
-#############################################################################
+===========================================================================
+Easiest way to contact me(Ganesh Kathare):
+My email - kathare[dot]ganesh[at]gmail[dot]com (kathare.ganesh@gmail.com)
+===========================================================================
 
 Copyright (c) 2011 Ganesh Kathare, Navi Mumbai MH, India. released under the MIT license
-
-
 
