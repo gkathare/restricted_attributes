@@ -42,6 +42,7 @@ class RestrictedRightsManager
   def self.get_restricted_fields(roles, obj, access_type)
     resp=Rails.cache.fetch([RestrictedRightsManager.version,roles.to_s,obj.class.name,access_type.to_s].join("_")){
     #obj_name=obj.class.name.underscore.downcase
+
       
       # get default fields for all objects
       begin
@@ -64,10 +65,10 @@ class RestrictedRightsManager
       begin
       	permitted_fields, role_fields = [], []
         roles.each do |role_name|
-          if RestrictedRightsManager.rights[role_name]
+        	if RestrictedRightsManager.rights[role_name]
             self_klass_name = obj.class.name.underscore.downcase
             base_klass_name = obj.class.base_class.name.underscore.downcase
-            klass_name = RightsManager.rights[role_name].include?(self_klass_name) ? self_klass_name : base_klass_name
+            klass_name = RestrictedRightsManager.rights[role_name].include?(self_klass_name) ? self_klass_name : base_klass_name
 
             if RestrictedRightsManager.rights[role_name][klass_name]
               permitted_fields |= RestrictedRightsManager.rights[role_name][klass_name][:permit_to] || []
