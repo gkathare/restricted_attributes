@@ -63,9 +63,21 @@ class RestrictedRightsManager
       end
 
       begin
+        if RestrictedRightsManager.rights[:default] && RestrictedRightsManager.rights[:default][access_type]
+          default_fields2 = RestrictedRightsManager.rights[:default][access_type]
+        else
+          default_fields2 = []
+        end
+      rescue
+        default_fields2 = []
+      end
+
+      default_fields |= default_fields2
+
+      begin
       	permitted_fields, role_fields = [], []
         roles.each do |role_name|
-        	if RestrictedRightsManager.rights[role_name]
+          if RestrictedRightsManager.rights[role_name]
             self_klass_name = obj.class.name.underscore.downcase
             base_klass_name = obj.class.base_class.name.underscore.downcase
             klass_name = RestrictedRightsManager.rights[role_name].include?(self_klass_name) ? self_klass_name : base_klass_name
@@ -95,8 +107,3 @@ class RestrictedRightsManager
     return (roles.blank?) ? [] : roles.collect {|role| role.title }
   end
 end
-
-
-
-
-

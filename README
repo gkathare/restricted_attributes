@@ -113,7 +113,11 @@ You need create permissions.yml file in your Project/config folder.
     |    :permit_to: [:attribute1, attribute2]			|
     |  :class_name_2:						|
     |    :permit_to: [:attribute1, attribute2]			|
-    |								|
+    |:default:							|
+    |  :readonly: [:attribute1, attribute2]			|
+    |  :hiddenonly: [:attribute1, attribute2]			|
+    |  :createonly: [:attribute1, attribute2]			|
+    |  :updateonly: [:attribute1, attribute2]			|
     |								|
     |								|
     |								|
@@ -124,6 +128,7 @@ You need create permissions.yml file in your Project/config folder.
     - class_name_1, class_name_2 are the class name or Model name
     - readonly, hiddenonly, createonly, updateonly - To set restriction on specific role.
     - permit_to: []  feature to set permission to change value of added attributes.
+    - default: provides common restricted attributes for all classes of all roles like id, create_at, updated_at.
     
 
 
@@ -233,7 +238,8 @@ Step 2 :
     |    :permit_to: [:email]					|
     |  :post:							|
     |    :permit_to: [:publish]         			|
-    |								|
+    |:default:							|
+    |  :readonly: [:created_at, :updated_at]			|
     |								|
     |								|
     |								|
@@ -244,7 +250,7 @@ Step 2 :
     1 :global_admin , :member are the roles of user. [ROLE]
     2 :user , :post are the class names [CLASS/MODEL]
     3 :permit_to: [] here you can add those attributes which will be permitted for appropriate User [ATTRIBUTES]
-
+    4 :default: you can add common attributes to restrict the access for all classes.
 
 Result :
 
