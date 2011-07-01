@@ -71,7 +71,7 @@ class RestrictedRightsManager
       rescue
         default_fields2 = []
       end
-
+      default_fields2 = default_fields2.collect{|d| d.to_s}
       default_fields |= default_fields2
 
       begin
@@ -107,3 +107,8 @@ class RestrictedRightsManager
     return (roles.blank?) ? [] : roles.collect {|role| role.title }
   end
 end
+
+
+
+
+

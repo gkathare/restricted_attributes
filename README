@@ -99,25 +99,25 @@ You need create permissions.yml file in your Project/config folder.
 
     Format : /config/permissions.yml   
     _____________________________________________________________
+    |:default:							|
+    |  :readonly: [:attribute1, :attribute2]			|
+    |  :hiddenonly: [:attribute1, :attribute2]			|
+    |  :createonly: [:attribute1, :attribute2]			|
+    |  :updateonly: [:attribute1, :attribute2]			|
     |:role_1:							|
     |  :class_name_1:						|
-    |    :readonly: [:attribute1, attribute2]			|
-    |    :hiddenonly: [:attribute1, attribute2]			|
-    |    :createonly: [:attribute1, attribute2]			|
-    |    :updateonly: [:attribute1, attribute2]			|
-    |    :permit_to: [:attribute1, attribute2]			|
+    |    :readonly: [:attribute1, :attribute2]			|
+    |    :hiddenonly: [:attribute1, :attribute2]		|
+    |    :createonly: [:attribute1, :attribute2]		|
+    |    :updateonly: [:attribute1, :attribute2]		|
+    |    :permit_to: [:attribute1, :attribute2]			|
     |  :class_name_2:						|
-    |    :permit_to: [:attribute1, attribute2]			|
+    |    :permit_to: [:attribute1, :attribute2]			|
     |:role_2:							|
     |  :class_name_1:						|
-    |    :permit_to: [:attribute1, attribute2]			|
+    |    :permit_to: [:attribute1, :attribute2]			|
     |  :class_name_2:						|
-    |    :permit_to: [:attribute1, attribute2]			|
-    |:default:							|
-    |  :readonly: [:attribute1, attribute2]			|
-    |  :hiddenonly: [:attribute1, attribute2]			|
-    |  :createonly: [:attribute1, attribute2]			|
-    |  :updateonly: [:attribute1, attribute2]			|
+    |    :permit_to: [:attribute1, :attribute2]			|
     |								|
     |								|
     |								|
@@ -228,6 +228,8 @@ Step 2 :
     Example:
     ## /config/permissions.yml
      ___________________________________________________________
+    |:default:							|
+    |  :readonly: [:created_at, :updated_at]			|
     |:global_admin:						|
     |  :user:							|
     |    :permit_to: [:logged_in, :login, :email, :bio] 	|
@@ -238,8 +240,6 @@ Step 2 :
     |    :permit_to: [:email]					|
     |  :post:							|
     |    :permit_to: [:publish]         			|
-    |:default:							|
-    |  :readonly: [:created_at, :updated_at]			|
     |								|
     |								|
     |								|
@@ -479,7 +479,8 @@ Helper Method & Instance Method ( For View & Controller files )
 
 
 
-Valuable Contribution : Rahul Agarwal.
+Valuable Contribution :
+Rahul Agarwal, Kevin Williams.
 
 ===========================================================================
 Easiest way to contact me(Ganesh Kathare):
