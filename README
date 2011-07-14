@@ -11,8 +11,16 @@ Features
  - Provides four different ways of restriction on fields (i.e read_only, create_only, update_only and hidden)
  - Restrict to add/modify values of particular attributes at model level while creating/updating a record.
  - Restrict functionality perform at before validation.
+ - Able to set restriction on instance varibles also.
  - OPTIONAL : It can also works on the basis of declarative_authorization roles system.
  - So, able to set role wise restriction/permission on various users to change the value of an attributes.
+
+
+*NOTE: You can use its simple version(i.e simple_restricted_attributes) also if plugin if you are not using declarative_authorization plugin/gem.
+(More Info - https://github.com/gkathare/simple_restricted_attributes)
+
+
+
 
 
 
@@ -296,7 +304,7 @@ Helper Method & Instance Method ( For View & Controller files )
     |   is_restricted?(Klass, action, field, user(optional))   |
     ------------------------------------------------------------
 
-     This method accepts min 3 to max 4 argument :
+     This method accepts min 3 to max 4 arguments :
 
      1 Klass    # This is a mandatory & first argument of this method.
                 # Should be valid class (i.e Model Name), no String.
@@ -317,7 +325,7 @@ Helper Method & Instance Method ( For View & Controller files )
                 # IMPORTANT NOTE - Useful only if you are using declarative_authorization plugin/gem and
                 # has_restricted_attributes method with :declarative => true tag in your specified model.
 
-                # Should be either valid User object or nil (dont pass any fourth argument)
+                # Should be either valid User object or nil (don't pass any fourth argument)
                 # Ex :  current_user (where current_user should be object of valid User record.)
 
 
@@ -346,7 +354,7 @@ Helper Method & Instance Method ( For View & Controller files )
                 # IMPORTANT NOTE - Useful only if you are using declarative_authorization plugin/gem and
                 # has_restricted_attributes method with :declarative => true tag in your specified model.
 
-                # Should be either valid User object or nil (dont pass any fourth argument)
+                # Should be either valid User object or nil (don't pass any fourth argument)
                 # Ex :  current_user (where current_user should be object of valid User record.)
 
 
@@ -364,7 +372,7 @@ Helper Method & Instance Method ( For View & Controller files )
     class Post < ActiveRecord::Base
         has_restricted_attributes :read_only => [:active],
                             :create_only => [:title],
-                            :declarative => true
+                            :declarative => true,
                             :update_only => [:abuse],
 			    :read_only_message => "is a read only attribute"
     end
@@ -379,7 +387,7 @@ Helper Method & Instance Method ( For View & Controller files )
 
 
     So for this post class we can check its particular field is restricted or not.
-    You can use this method in controller or view file.
+    (You can use this method in controller, view and helper file.)
 
     # CASE 1 - :declarative => true
     
@@ -421,7 +429,7 @@ Helper Method & Instance Method ( For View & Controller files )
     class Post < ActiveRecord::Base
         has_restricted_attributes :read_only => [:active],
                             :create_only => [:title],
-                            :declarative => true
+                            :declarative => true,
                             :update_only => [:abuse],
 			    :read_only_message => "is a read only attribute"
     end
@@ -435,8 +443,7 @@ Helper Method & Instance Method ( For View & Controller files )
     Here I added permission for global_admin role.
 
 
-    So for this post class we can check its particular field is restricted or not.
-    You can use this method in controller or view file.
+    So for this post class we can check its particular field is restricted or not.    
 
     # CASE 1 - :declarative => true
 

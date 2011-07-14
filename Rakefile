@@ -8,7 +8,6 @@ require 'rake/testtask'
 
 PKG_FILES = FileList[
   '[a-zA-Z]*',
-  'generators/**/*',
   'lib/**/*',
   'test/**/*'
 ]
