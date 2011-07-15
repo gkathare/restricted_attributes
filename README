@@ -16,9 +16,10 @@ Features
  - So, able to set role wise restriction/permission on various users to change the value of an attributes.
 
 
-*NOTE: You can use its simple version(i.e simple_restricted_attributes) also if plugin if you are not using declarative_authorization plugin/gem.
-(More Info - https://github.com/gkathare/simple_restricted_attributes)
 
+
+*NOTE: Try its simple version(i.e simple_restricted_attributes plugin) if you are NOT using declarative_authorization plugin/gem. Find more information about that plugin on following link
+(More Info - https://github.com/gkathare/simple_restricted_attributes)
 
 
 
